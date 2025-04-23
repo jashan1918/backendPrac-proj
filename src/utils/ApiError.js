@@ -8,7 +8,7 @@ class ApiError extends Error {
     ) {
         super(message);
         this.statusCode = statusCode,
-        this.data = null, //this is not needed in most of the caes but its here no need tho
+        this.data = null, //this is not needed in most of the cases but its here,, no need tho
         this.message = message,  //this can also be removed becasue the super already sets the message this can also be removed and the code will still work
         this.success = false,
         this.errors = errors
