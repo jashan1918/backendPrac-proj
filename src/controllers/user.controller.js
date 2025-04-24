@@ -6,7 +6,7 @@ import { ApiResponse } from "../utils/ApiResponse.js"
 
 
 
- const registerUser = asyncHandler(async(req,res) => {
+const registerUser = asyncHandler(async(req,res) => {
     
     //get user details from the frontend
     //validations server side/ in backend - not empty
@@ -19,7 +19,7 @@ import { ApiResponse } from "../utils/ApiResponse.js"
     //return response or else error
 
     const {fullname, username, email, password} = req.body;
-    console.log("email : ", email);
+    const {files} = req;
 
     if(
         [fullname, username, email, password].some((field) => {
@@ -29,7 +29,7 @@ import { ApiResponse } from "../utils/ApiResponse.js"
         throw new ApiError(400, "All fields are required")
     }
 
-    const existedUser = User.findOne({
+    const existedUser = await User.findOne({
         $or: [{ username }, { email }]
     })
 
@@ -37,16 +37,18 @@ import { ApiResponse } from "../utils/ApiResponse.js"
         throw new ApiError(409, "User with this email or username already exists")
     }
 
-    const avatarLocalPath = req.files?.avatar[0]?.path;
-    const coverImageLocalPath = req.files?.coverimage[0].path;
+    const avatarLocalPath = files?.avatar?.[0]?.path
+    // const coverImageLocalPath = files?.coverImage?.[0]?.path
 
-    if(!avatarLocalPath){
-        throw new ApiError(400, "Avatar is required")
+    let coverImageLocalPath;
+    if(req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0){
+
+        coverImageLocalPath = req.files.coverImage[0].path
     }
-
+    
     const avatar = await uploadOnCloudinary(avatarLocalPath);
     const coverImage = await uploadOnCloudinary(coverImageLocalPath);
-
+    
     if(!avatar){
         throw new ApiError(400, "Avatar is required")
     }
@@ -69,7 +71,7 @@ import { ApiResponse } from "../utils/ApiResponse.js"
  
    return res.status(201).json(
 
-    new ApiResponse(200, createdUser, "User registered Succesfully!")
+    new ApiResponse(200, userCreated, "User registered Succesfully!")
    )
 
     
