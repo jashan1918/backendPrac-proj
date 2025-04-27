@@ -231,6 +231,9 @@ const changeCurrentPassword = asyncHandler(async(req,res) => {
         if(!oldPassword || !newPassword){
             throw new ApiError(402, "all fields are required")
         }
+        if(oldPassword === newPassword) {
+            throw new ApiError(403, "new password cannot be same as the old password")
+        }
 
         const user = await User.findById(req.user?._id);
 
@@ -252,9 +255,12 @@ const changeCurrentPassword = asyncHandler(async(req,res) => {
         )
 })
 
+
+
 export {
     registerUser,
     loginUser,
     logoutUser,
-    refreshAccessToken
+    refreshAccessToken,
+    changeCurrentPassword
 }
