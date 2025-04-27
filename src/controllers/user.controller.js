@@ -3,6 +3,7 @@ import {ApiError} from "../utils/ApiError.js"
 import {User} from "../models/user.model.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
+import jwt from "jsonwebtoken"
 
 
 const generateAccessAndRefreshTokens = async(userId) => {
@@ -174,8 +175,48 @@ return res.status(200)
     
 })
 
+const refreshAccessToken = asyncHandler(async(req,res) => {
+
+    const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken
+
+    if(!refreshToken) {
+        throw new ApiError(402, "Unauthorized request")
+    }
+    
+    const decodedToken = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET)
+
+    const user = await User.findById(decodedToken?._id)
+
+    if(!user) {
+        throw new ApiError(400, "user does not exist")
+    }
+
+    if(refreshToken !== user.refreshToken){
+        throw new ApiError(401, "Refresh token is invalid or used")
+    }
+
+    const options = {
+        httpOnly: true,
+        secure: true
+    }
+
+    const {accessToken, newrefreshToken} = await user.generateAccessAndRefreshTokens()
+
+    return res.status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", newrefreshToken, options)
+    .json(
+        new ApiResponse(200, 
+            {
+                accessToken, refreshToken: newrefreshToken
+            },
+            "Access Token refreshed")
+    )
+})
+
 export {
     registerUser,
     loginUser,
-    logoutUser
+    logoutUser,
+    refreshAccessToken
 }
