@@ -214,6 +214,44 @@ const refreshAccessToken = asyncHandler(async(req,res) => {
     )
 })
 
+
+const changeCurrentPassword = asyncHandler(async(req,res) => {
+
+//get the data from req.body old password and newpassword
+//check if the data is given if not throw an error
+//find the user by id get it from the req.user from middleware
+//compare the old passwrod with the saved password using the method we created earlier bcrypt.compare
+//if the password dont match throw an error of invalid password
+//if the password matches set user.password to the new password
+//after that save it in the database using validationsbeforesave false
+//return the response saying that the password has been changed successfully 
+
+        const {oldPassword, newPassword} = req.body;
+
+        if(!oldPassword || !newPassword){
+            throw new ApiError(402, "all fields are required")
+        }
+
+        const user = await User.findById(req.user?._id);
+
+        const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
+
+        if(!isPasswordCorrect) {
+            throw new ApiError(400, "your old password is wrong")
+        }
+
+        user.password = newPassword;
+        await  user.save({validateBeforeSave: false});
+
+        return res.status(200)
+        .json(
+            new ApiResponse(200,
+                {},
+                "Password changed succesfully"
+            )
+        )
+})
+
 export {
     registerUser,
     loginUser,
