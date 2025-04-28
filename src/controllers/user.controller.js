@@ -264,11 +264,50 @@ const getCurrentUser = asyncHandler(async(req,res) => {
     ))
 })
 
+const updateAccountDetails = asyncHandler(async(req, res) => {
+
+    //get the user from the middleware req.user
+    //find the user in the database with the user id and update the fields that the user sent
+    //then return the response (these are very vague steps)
+
+    const {fullname, username, email} = req.body;
+
+    if(!fullname || !username || !email) {
+        throw new ApiError(402, "All fields are required")
+    }
+
+    const user = await User.findByIdAndUpdate(req.user._id,
+        {
+            $set : {
+                fullname,
+                username,
+                email
+            },
+     
+        },
+        {
+            new: true
+        }
+    ).select("-password")
+
+    if(!user) {
+        throw new ApiError(400, "User not found")
+    }
+
+    return res.status(200).json(
+        new ApiResponse(200,
+            user,
+            "Account details updated successfully"
+        )
+    )
+})
+
 export {
     registerUser,
     loginUser,
     logoutUser,
     refreshAccessToken,
     changeCurrentPassword,
-    getCurrentUser
+    getCurrentUser,
+    updateAccountDetails
 }
